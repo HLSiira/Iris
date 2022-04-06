@@ -11,9 +11,10 @@
 //	pattern in your front-end application. A component can publish events with
 //	arguements that multiple client components can subscribe to; it encourages
 //	loose coupling of components, resulting in less brittle/more reusable code.
-//////////////////////////////////////////////////////////////////////////////80
-// Suggestions:
-//	- Reimplement the ability to pass context
+//
+//	The Chronometer Module sets global intervals that are published through
+//	Carbon subscriptions; allowing the client browser to only have a select few
+//	Intervals running while providing plugins the ability to use timed events.
 //////////////////////////////////////////////////////////////////////////////80
 // Usage:
 //	- list: Lists out all currently active subscriptions
@@ -22,18 +23,47 @@
 //  - pub: publishes an event with arguements
 //  - del: deletes a subscribtion
 //
-// 	iris.subscribe('system.loadExtra', () => atheos.plugin.init());
+//  iris.pub('system.userAuthenticated');
+//
+// 	iris.sub('system.loadExtra', () => plugin.init());
+//
+//  iris.sub('system.init', function(data) {
+//    // Initialize component
+//  });
+//
+//  - byte: publishes an event every 100 milliseconds (10th of a second)
+//  - kilo: publishes an event every 1000 milliseconds (1 second)
+//  - mega: publishes an event every 10000 milliseconds (10 seconds)
+//  - giga: publishes an event every 100000 milliseconds (100 seconds)
+//  - tera: publishes an event every 300000 milliseconds (5 minutes)
 //
 //	iris.sub('chrono.kilo', function() {
 //		console.log("This will log every 1 second");
 //	}
-//
-//////////////////////////////////////////////////////////////////////////////80
+//////////////////////////////////////////////////////////////////////////////8080
 
 (function() {
 	'use strict';
 
 	var subs = {};
+
+	let msReg = /(\d+)([mshd]+)/g,
+		msUnt = {
+			s: 1000,
+			m: 60000,
+			h: 3600000,
+			d: 86400000
+		};
+
+	window.ms = (val) => {
+		let test = [...val.toLowerCase().matchAll(msReg)],
+			ms = 0,
+			unit;
+		for (unit of test) {
+			ms += unit[1] * msUnt[unit[2]];
+		}
+		return ms;
+	};
 
 	window.iris = {
 		list: () => subs,
@@ -81,8 +111,12 @@
 		}
 	};
 
-	iris.publish = iris.pub;
-	iris.subscribe = iris.sub;
-	iris.unsubscribe = iris.del;
+	window.cron = {
+		byte: setInterval(() => iris.pub('cron.byte'), 100), // 10th of a second
+		kilo: setInterval(() => iris.pub('cron.kilo'), 1000), // 1 second
+		mega: setInterval(() => iris.pub('cron.mega'), 10000), // 10 Seconds
+		giga: setInterval(() => iris.pub('cron.giga'), 100000), // 100 Seconds
+		tera: setInterval(() => iris.pub('cron.tera'), 300000) // 5 minutes
+	};
 
 }());
